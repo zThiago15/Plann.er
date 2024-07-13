@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,5 +41,23 @@ public class TripController {
 
         // Return trip if exists or else return not found
         return trip.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Trip> updateTrip(@PathVariable("id") UUID id, @RequestBody TripRequestDTO tripPayload) {
+        Optional<Trip> tripOptional = this.tripRepository.findById(id);
+
+        if (tripOptional.isPresent()) {
+            Trip tripToUpdate = tripOptional.get();
+            tripToUpdate.setStartsAt(LocalDateTime.parse(tripPayload.starts_at(), DateTimeFormatter.ISO_DATE_TIME));
+            tripToUpdate.setEndsAt(LocalDateTime.parse(tripPayload.ends_at(), DateTimeFormatter.ISO_DATE_TIME));
+            tripToUpdate.setDestination(tripPayload.destination());
+
+            this.tripRepository.save(tripToUpdate);
+
+            return ResponseEntity.ok(tripToUpdate);
+        }
+
+        return ResponseEntity.notFound().build();
     }
 }
